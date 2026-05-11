@@ -32,6 +32,8 @@ export const securityMiddleware = (app) => {
 
   const defaultOrigins = [
     process.env.FRONTEND_URL,
+    'https://luxeva-pro.vercel.app',
+    'https://luxeva-six.vercel.app',
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     'http://localhost:5174',
@@ -44,10 +46,24 @@ export const securityMiddleware = (app) => {
 
   const allowedOrigins = Array.from(new Set([...envOriginList, ...defaultOrigins]))
 
+  const isAllowedPreviewOrigin = (origin) => {
+    try {
+      const u = new URL(origin)
+      if (u.protocol !== 'https:') return false
+      const host = u.hostname.toLowerCase()
+      if (host === 'luxeva.com' || host.endsWith('.luxeva.com')) return true
+      if (host.endsWith('.vercel.app') && host.startsWith('luxeva-')) return true
+      return false
+    } catch {
+      return false
+    }
+  }
+
   const corsOptions = {
     origin: (origin, cb) => {
       if (!origin) return cb(null, true)
       if (allowedOrigins.includes(origin)) return cb(null, true)
+      if (isAllowedPreviewOrigin(origin)) return cb(null, true)
       return cb(new Error(`CORS blocked for origin: ${origin}`))
     },
     credentials: true,
